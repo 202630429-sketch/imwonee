@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘 뭐 먹지? | 점심 메뉴 추천</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f7f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin: 40px 0 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        /* 카테고리 버튼 스타일 */
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .category-btn {
+            border: 2px solid #ffe3e3;
+            background: white;
+            color: #ff6b6b;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+
+        /* 메뉴 디스플레이 상자 */
+        .result-box {
+            background: #fff0f0;
+            border: 2px dashed #ffb8b8;
+            border-radius: 15px;
+            padding: 40px 20px;
+            margin-bottom: 25px;
+            min-height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .result-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* 추천 버튼 */
+        .draw-btn {
+            width: 100%;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .draw-btn:hover {
+            background: #ee5253;
+        }
+
+        .draw-btn:active {
+            transform: scale(0.98);
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🍱 오늘 뭐 먹지?</h1>
+        <p>오늘 점심 메뉴 고민을 한 번에 해결해 드립니다!</p>
+    </header>
+
+    <main class="container">
+        <!-- 카테고리 선택 필터 -->
+        <div class="categories">
+            <button class="category-btn active" onclick="setCategory('all', this)">전체</button>
+            <button class="category-btn" onclick="setCategory('korean', this)">한식</button>
+            <button class="category-btn" onclick="setCategory('chinese', this)">중식</button>
+            <button class="category-btn" onclick="setCategory('japanese', this)">일식</button>
+            <button class="category-btn" onclick="setCategory('western', this)">양식</button>
+            <button class="category-btn" onclick="setCategory('snack', this)">분식</button>
+        </div>
+
+        <!-- 결과 출력 영역 -->
+        <div class="result-box">
+            <div class="result-text" id="menuResult">버튼을 눌러 메뉴를 추천받으세요!</div>
+        </div>
+
+        <!-- 뽑기 버튼 -->
+        <button class="draw-btn" onclick="recommendMenu()">점심 메뉴 추천받기 🎲</button>
+    </main>
+
+    <footer>
+        &copy; 오늘 점심 추천 서비스 - 맛있는 점심 되세요!
+    </footer>
+
+    <script>
+        // 메뉴 데이터 정의
+        const menuData = {
+            korean: ["김치찌개", "된장찌개", "제육볶음", "비빔밥", "부대찌개", "순대국밥", "불고기", "삼계탕"],
+            chinese: ["짜장면", "짬뽕", "볶음밥", "탕수육", "마라탕", "마파두부"],
+            japanese: ["돈까스", "초밥", "라멘", "우동", "가츠동", "메밀소바"],
+            western: ["파스타", "수제버거", "피자", "스테이크", "리조또"],
+            snack: ["떡볶이", "라면에 김밥", "쫄면", "튀김 모둠", "순대"]
+        };
+
+        let currentCategory = 'all';
+
+        // 카테고리 변경 함수
+        function setCategory(category, element) {
+            currentCategory = category;
+            
+            // 모든 버튼의 active 클래스 제거 후 클릭된 버튼에 추가
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // 메뉴 추천 기능
+        function recommendMenu() {
+            let availableMenus = [];
+
+            if (currentCategory === 'all') {
+                // 모든 메뉴 합치기
+                Object.values(menuData).forEach(array => {
+                    availableMenus = availableMenus.concat(array);
+                });
+            } else {
+                availableMenus = menuData[currentCategory];
+            }
+
+            const resultElement = document.getElementById('menuResult');
+
+            // 간단한 룰렛 애니메이션 효과
+            let count = 0;
+            const timer = setInterval(() => {
+                const randomTemp = availableMenus[Math.floor(Math.random() * availableMenus.length)];
+                resultElement.textContent = randomTemp;
+                count++;
+
+                if (count > 10) {
+                    clearInterval(timer);
+                    // 최종 메뉴 결정
+                    const finalMenu = availableMenus[Math.floor(Math.random() * availableMenus.length)];
+                    resultElement.textContent = `🎉 ${finalMenu} 🎉`;
+                }
+            }, 50);
+        }
+    </script>
+</body>
+</html>
