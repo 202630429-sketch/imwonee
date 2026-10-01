@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘의 산책 - 집 근처 추천 산책로</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #F9F8F3;
+      --card-bg: #FFFFFF;
+      --primary-green: #5B7B61;
+      --primary-light: #E8EFE9;
+      --accent-yellow: #E8A838;
+      --text-main: #2C3531;
+      --text-sub: #76827D;
+      --border-color: #E2E7E3;
+      --shadow: 0 8px 24px rgba(91, 123, 97, 0.08);
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 6px 0;
+    }
+
+    header h1 {
+      font-family: 'Gowun Dodum', sans-serif;
+      color: var(--primary-green);
+      font-size: 1.6rem;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .weather-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, var(--primary-light) 0%, #FAF8F5 100%);
+      border: none;
+      padding: 14px 18px;
+    }
+
+    .weather-left .location {
+      font-size: 0.95rem;
+      font-weight: bold;
+    }
+
+    .weather-left .condition {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .weather-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .temp {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary-green);
+    }
+
+    /* 프로그레스 바 */
+    .progress-container {
+      width: 100%;
+      background-color: #E2E7E3;
+      height: 6px;
+      border-radius: 3px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 20%;
+      background-color: var(--primary-green);
+      transition: width 0.3s ease;
+    }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .step-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary-green);
+    }
+
+    .step-count {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      font-weight: bold;
+    }
+
+    /* 단계별 카드 박스 */
+    .step-content {
+      display: none;
+      min-height: 240px;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .step-content.active {
+      display: flex;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+
+    .form-group label span {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      font-weight: normal;
+    }
+
+    /* 선택지 그리드 */
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .option-grid.single-col {
+      grid-template-columns: 1fr;
+    }
+
+    .chip-btn {
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+    }
+
+    .chip-btn.active {
+      background-color: var(--primary-green);
+      color: #FFF;
+      border-color: var(--primary-green);
+      font-weight: 500;
+    }
+
+    .chip-btn.active::after {
+      content: '✓';
+      font-weight: bold;
+    }
+
+    .input-box {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      font-size: 0.9rem;
+      outline: none;
+      margin-top: 10px;
+    }
+
+    /* 하단 버튼 그룹 */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-nav {
+      flex: 1;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-prev {
+      background-color: #E2E7E3;
+      color: var(--text-main);
+    }
+
+    .btn-next {
+      background-color: var(--primary-green);
+      color: white;
+      flex: 2;
+    }
+
+    .btn-submit {
+      background-color: var(--accent-yellow);
+      color: white;
+      flex: 2;
+    }
+
+    /* SVG 순수 일러스트 산책로 카드 */
+    .illustration-card {
+      width: 100%;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 100%);
+      padding: 20px 16px 16px 16px;
+      text-align: center;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      transition: background 0.3s ease;
+    }
+
+    .illustration-svg {
+      width: 100%;
+      height: 140px;
+      margin-bottom: 10px;
+    }
+
+    .trail-tag {
+      display: inline-block;
+      background-color: var(--primary-green);
+      color: white;
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .trail-name {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text-main);
+    }
+
+    /* 산책로 핵심 요약 요수 */
+    .trail-info-box {
+      background-color: var(--bg-color);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: var(--text-sub);
+    }
+
+    .info-val {
+      font-weight: bold;
+      color: var(--primary-green);
+    }
+
+    /* 별점 및 후기 섹션 */
+    .review-section {
+      background-color: var(--bg-color);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .review-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--primary-green);
+      margin-bottom: 4px;
+    }
+
+    .review-desc {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+    }
+
+    .star-rating {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      color: #D1D8D4;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .star-btn.active {
+      color: var(--accent-yellow);
+    }
+
+    .btn-review-submit {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--primary-green);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <h1>🍃 오늘의 산책</h1>
+      <p>집 근처 걷기 좋은 산책로 추천</p>
+    </header>
+
+    <!-- 날씨 요약 -->
+    <div class="card weather-info">
+      <div class="weather-left">
+        <div class="location">🏡 우리 집 (마포구 연남동)</div>
+        <div class="condition">햇살은 따뜻하고 바람은 선선해요</div>
+      </div>
+      <div class="weather-right">
+        <span style="font-size: 1.4rem;">🌤️</span>
+        <span class="temp">22°C</span>
+      </div>
+    </div>
+
+    <!-- 단계별 폼 카드 -->
+    <div class="card" id="step-card">
+      
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+
+      <div class="step-header">
+        <span class="step-title">🌱 산책로 맞춤 설정</span>
+        <span class="step-count" id="step-count">1 / 5</span>
+      </div>
+
+      <!-- STEP 1: 출발 시간 -->
+      <div class="step-content active" id="step-1">
+        <div class="form-group">
+          <label>1. 언제 산책하러 가시나요?</label>
+          <div class="option-grid">
+            <button class="chip-btn active" onclick="selectSingle(this); toggleTimeInput(false)"><span>⚡ 지금 바로</span></button>
+            <button class="chip-btn" onclick="selectSingle(this); toggleTimeInput(false)"><span>🌅 상쾌한 아침</span></button>
+            <button class="chip-btn" onclick="selectSingle(this); toggleTimeInput(false)"><span>☀️ 나른한 오후</span></button>
+            <button class="chip-btn" onclick="selectSingle(this); toggleTimeInput(false)"><span>🌆 노을지는 저녁</span></button>
+            <button class="chip-btn" onclick="selectSingle(this); toggleTimeInput(false)"><span>🌙 조용한 밤산책</span></button>
+            <button class="chip-btn" onclick="selectSingle(this); toggleTimeInput(true)"><span>⏰ 직접 시간 입력</span></button>
+          </div>
+          <div id="custom-time-box" style="display: none;">
+            <input type="time" class="input-box" value="18:00">
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: 희망 산책 시간 -->
+      <div class="step-content" id="step-2">
+        <div class="form-group">
+          <label>2. 얼마 동안 걷고 싶으신가요?</label>
+          <div class="option-grid single-col">
+            <button class="chip-btn" onclick="selectSingle(this)"><span>⚡ 10~15분 (가볍게 기분 전환)</span></button>
+            <button class="chip-btn active" onclick="selectSingle(this)"><span>🌿 20~30분 (딱 적당한 코스)</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>🚶‍♂️ 40~50분 (여유롭게 산책)</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>👟 1시간 이상 (본격 파워 워킹)</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: 동행자 -->
+      <div class="step-content" id="step-3">
+        <div class="form-group">
+          <label>3. 누구와 함께 걸으시나요?</label>
+          <div class="option-grid">
+            <button class="chip-btn active" onclick="selectSingle(this)"><span>🎧 혼자서 유유자적</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>🐕 댕댕이/반려동물</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>👶 아이/유모차</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>👨‍👩‍👦 부모님/어르신</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>👩‍❤️‍👨 연인과 데이트</span></button>
+            <button class="chip-btn" onclick="selectSingle(this)"><span>👭 친구와 수다</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: 산책로 분위기 -->
+      <div class="step-content" id="step-4">
+        <div class="form-group">
+          <label>4. 선호하는 산책로 분위기 <span>(중복 가능)</span></label>
+          <div class="option-grid">
+            <button class="chip-btn active" onclick="toggleMulti(this)"><span>🌳 울창한 숲과 나무길</span></button>
+            <button class="chip-btn active" onclick="toggleMulti(this)"><span>🌊 잔잔한 시냇물/하천길</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>🌺 꽃과 정원이 있는 길</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>☕️ 예쁜 카페가 이어지는 길</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>🪑 쉼터/벤치가 많은 길</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>✨ 야경이 예쁜 조명길</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: 보행 환경 -->
+      <div class="step-content" id="step-5">
+        <div class="form-group">
+          <label>5. 선호하는 길 상태 <span>(중복 가능)</span></label>
+          <div class="option-grid single-col">
+            <button class="chip-btn active" onclick="toggleMulti(this)"><span>🧱 계단/턱이 없는 완만한 평지길</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>🌳 햇빛을 가려주는 시원한 나무 그늘길</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>💡 밤에도 밝아서 안심할 수 있는 산책로</span></button>
+            <button class="chip-btn" onclick="toggleMulti(this)"><span>🚫 오토바이/차량이 다니지 않는 보행전용로</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 탐색 버튼 -->
+      <div class="btn-group">
+        <button class="btn-nav btn-prev" id="btn-prev" onclick="prevStep()" style="display: none;">이전</button>
+        <button class="btn-nav btn-next" id="btn-next" onclick="nextStep()">다음으로 ➔</button>
+        <button class="btn-nav btn-submit" id="btn-submit" onclick="generateTrail()" style="display: none;">산책로 추천받기 ✨</button>
+      </div>
+
+    </div>
+
+    <!-- AI 추천 결과 카드 -->
+    <div class="card" id="result-card" style="display: none;">
+      
+      <!-- SVG 순수 일러스트 아트 -->
+      <div class="illustration-card" id="card-bg-gradient">
+        <svg class="illustration-svg" viewBox="0 0 320 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 하늘 & 뭉게구름 -->
+          <path d="M30 35C30 30 34 26 39 26C42 26 45 28 46 30C48 27 52 25 56 26C61 27 64 32 64 37C66 37 68 39 68 42C68 45 65 48 62 48H30C26 48 23 45 23 41C23 37 26 35 30 35Z" fill="white" opacity="0.85"/>
+          <path d="M220 25C220 20 224 16 229 16C232 16 235 18 236 20C238 17 242 15 246 16C251 17 254 22 254 27C256 27 258 29 258 32C258 35 255 38 252 38H220C216 38 213 35 213 31C213 27 216 25 220 25Z" fill="white" opacity="0.7"/>
+          <circle cx="280" cy="30" r="16" fill="#FFE082" />
+          
+          <!-- 언덕 배경 -->
+          <path id="hill1" d="M0 80Q100 50 200 85T320 70V140H0V80Z" fill="#A5D6A7" />
+          <path id="hill2" d="M0 95Q120 75 220 100T320 90V140H0V95Z" fill="#81C784" />
+          
+          <!-- 산책로 (S-Curve Trail) -->
+          <path d="M -10 140 C 80 130, 100 110, 150 105 C 200 100, 240 85, 330 80" stroke="#F5E6CC" stroke-width="22" stroke-linecap="round" fill="none"/>
+          <path d="M -10 140 C 80 130, 100 110, 150 105 C 200 100, 240 85, 330 80" stroke="#E8D3B0" stroke-width="18" stroke-linecap="round" fill="none"/>
+
+          <!-- 좌우 풍성한 나무들 -->
+          <circle id="tree1" cx="40" cy="70" r="22" fill="#2E7D32"/>
+          <rect x="36" y="88" width="8" height="20" fill="#5D4037" rx="2"/>
+          
+          <circle id="tree2" cx="280" cy="65" r="25" fill="#388E3C"/>
+          <rect x="276" y="86" width="8" height="20" fill="#5D4037" rx="2"/>
+
+          <!-- 길가 벤치 -->
+          <rect x="180" y="88" width="30" height="5" fill="#8D6E63" rx="1"/>
+          <rect x="183" y="93" width="3" height="8" fill="#4E342E"/>
+          <rect x="204" y="93" width="3" height="8" fill="#4E342E"/>
+        </svg>
+
+        <span class="trail-tag" id="res-tag">🌿 집에서 바로 연결되는 대표 산책로</span>
+        <div class="trail-name" id="res-name">경의선 숲길 느티나무 산책로</div>
+      </div>
+
+      <!-- 산책로 주요 정보 요약 -->
+      <div class="trail-info-box">
+        <div class="info-item">
+          <span class="info-label">📍 위치 구간</span>
+          <span class="info-val" id="res-loc">연남동 숲길 입구 ~ 홍대입구역 3번출구</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">⏱️ 추천 소요시간</span>
+          <span class="info-val" id="res-time">약 25분 (왕복 1.6 km)</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">✨ 산책로 특징</span>
+          <span class="info-val" id="res-feature">울창한 숲 그늘, 평지 보도, 곳곳에 쉼터</span>
+        </div>
+      </div>
+
+      <!-- 별점 및 한줄 후기 섹션 -->
+      <div class="review-section">
+        <div class="review-title">⭐️ 추천해 드린 산책로가 마음에 드시나요?</div>
+        <div class="review-desc">별점과 후기를 남겨주시면 다음 산책로 추천에 반영돼요!</div>
+
+        <div class="star-rating">
+          <button class="star-btn" onclick="setRating(1)">★</button>
+          <button class="star-btn" onclick="setRating(2)">★</button>
+          <button class="star-btn" onclick="setRating(3)">★</button>
+          <button class="star-btn" onclick="setRating(4)">★</button>
+          <button class="star-btn" onclick="setRating(5)">★</button>
+        </div>
+
+        <input type="text" id="review-input" class="input-box" style="margin-top:0;" placeholder="한줄 후기를 입력해 주세요 (예: 나무 그늘이 많아서 시원해요!)">
+        <button class="btn-review-submit" onclick="submitReview()">후기 등록하기</button>
+      </div>
+
+      <!-- 버튼: 다른 산책로 즉시 새로고침 -->
+      <button class="btn-nav btn-next" onclick="generateTrail()" style="width:100%; margin-top:14px;">🎲 다른 산책로 또 추천받기</button>
+      <button class="btn-nav btn-prev" onclick="resetForm()" style="width:100%; margin-top:8px;">⚙️ 산책 조건 다시 설정하기</button>
+    </div>
+
+    <footer>
+      © 오늘의 산책 (Today's Walk)
+    </footer>
+
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    // 다양한 추천 산책로 데이터베이스 (무작위 변경용)
+    const trailDatabase = [
+      {
+        tag: "🌿 집에서 바로 연결되는 대표 산책로",
+        name: "경의선 숲길 느티나무 산책로",
+        location: "연남동 숲길 입구 ~ 홍대입구역 3번출구",
+        time: "약 25분 (왕복 1.6 km)",
+        feature: "울창한 숲 그늘, 평지 보도, 곳곳에 쉼터",
+        bgGrad: "linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 100%)",
+        hill1: "#A5D6A7", hill2: "#81C784", tree1: "#2E7D32", tree2: "#388E3C"
+      },
+      {
+        tag: "🌊 시냇물 소리가 정겨운 물빛 산책로",
+        name: "홍제천 인공폭포 수변 산책길",
+        location: "마포구 연남교 ~ 홍제천 인공폭포 구간",
+        time: "약 35분 (왕복 2.3 km)",
+        feature: "탁 트인 하천 뷰, 잔잔한 물소리, 밤 조명 우수",
+        bgGrad: "linear-gradient(180deg, #E1F5FE 0%, #B3E5FC 100%)",
+        hill1: "#81D4FA", hill2: "#4FC3F7", tree1: "#0288D1", tree2: "#0277BD"
+      },
+      {
+        tag: "🌺 아기자기한 꽃과 감성 골목길",
+        name: "성미산 마을 정원 & 감성 골목길",
+        location: "성미산 동네 정원 ~ 성산동 주민센터",
+        time: "약 20분 (왕복 1.2 km)",
+        feature: "조용한 분위기, 독립서점과 작고 예쁜 카페들",
+        bgGrad: "linear-gradient(180deg, #FFF3E0 0%, #FFE0B2 100%)",
+        hill1: "#FFCC80", hill2: "#FB8C00", tree1: "#E65100", tree2: "#F57C00"
+      },
+      {
+        tag: "🌲 피톤치드 가득한 조용한 숲길",
+        name: "성미산 자락길 힐링 산책로",
+        location: "성미산 체육공원 ~ 정상 둘레길",
+        time: "약 40분 (순환 2.5 km)",
+        feature: "완만한 목재 데크길, 맑은 공기, 새소리 감상",
+        bgGrad: "linear-gradient(180deg, #F1F8E9 0%, #DCEDC8 100%)",
+        hill1: "#C5E1A5", hill2: "#AED581", tree1: "#558B2F", tree2: "#33691E"
+      },
+      {
+        tag: "✨ 은은한 밤 조명이 예쁜 야경 코스",
+        name: "망원 한강공원 연결 수변 산책로",
+        location: "망원 나들목 ~ 한강공원 잔디마당",
+        time: "약 30분 (왕복 2.0 km)",
+        feature: "시원한 강바람, 차 없는 안전한 보행 전용로",
+        bgGrad: "linear-gradient(180deg, #E8EAF6 0%, #C5CAE9 100%)",
+        hill1: "#9FA8DA", hill2: "#7986CB", tree1: "#303F9F", tree2: "#1A237E"
+      }
+    ];
+
+    let lastIndex = -1;
+
+    function updateStep() {
+      document.querySelectorAll('.step-content').forEach((el, idx) => {
+        el.classList.toggle('active', idx + 1 === currentStep);
+      });
+
+      document.getElementById('progress-bar').style.width = `${(currentStep / totalSteps) * 100}%`;
+      document.getElementById('step-count').innerText = `${currentStep} / ${totalSteps}`;
+
+      document.getElementById('btn-prev').style.display = currentStep > 1 ? 'block' : 'none';
+      
+      if (currentStep === totalSteps) {
+        document.getElementById('btn-next').style.display = 'none';
+        document.getElementById('btn-submit').style.display = 'block';
+      } else {
+        document.getElementById('btn-next').style.display = 'block';
+        document.getElementById('btn-submit').style.display = 'none';
+      }
+    }
+
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        currentStep++;
+        updateStep();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateStep();
+      }
+    }
+
+    function selectSingle(btn) {
+      const parent = btn.closest('.option-grid');
+      parent.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function toggleMulti(btn) {
+      btn.classList.toggle('active');
+    }
+
+    function toggleTimeInput(show) {
+      document.getElementById('custom-time-box').style.display = show ? 'block' : 'none';
+    }
+
+    // 산책로 무작위 추천 함수
+    function generateTrail() {
+      document.getElementById('step-card').style.display = 'none';
+      document.getElementById('result-card').style.display = 'block';
+
+      // 이전에 나왔던 코스와 중복되지 않도록 무작위 선택
+      let randomIndex;
+      do {
+        randomIndex = Math.floor(Math.random() * trailDatabase.length);
+      } while (randomIndex === lastIndex && trailDatabase.length > 1);
+      
+      lastIndex = randomIndex;
+      const trail = trailDatabase[randomIndex];
+
+      // 데이터 적용
+      document.getElementById('res-tag').innerText = trail.tag;
+      document.getElementById('res-name').innerText = trail.name;
+      document.getElementById('res-loc').innerText = trail.location;
+      document.getElementById('res-time').innerText = trail.time;
+      document.getElementById('res-feature').innerText = trail.feature;
+
+      // 일러스트 색상 변환
+      document.getElementById('card-bg-gradient').style.background = trail.bgGrad;
+      document.getElementById('hill1').setAttribute('fill', trail.hill1);
+      document.getElementById('hill2').setAttribute('fill', trail.hill2);
+      document.getElementById('tree1').setAttribute('fill', trail.tree1);
+      document.getElementById('tree2').setAttribute('fill', trail.tree2);
+
+      // 별점 초기화
+      setRating(0);
+      document.getElementById('review-input').value = '';
+    }
+
+    let selectedRating = 0;
+    function setRating(rating) {
+      selectedRating = rating;
+      const stars = document.querySelectorAll('.star-btn');
+      stars.forEach((star, idx) => {
+        star.classList.toggle('active', idx < rating);
+      });
+    }
+
+    function submitReview() {
+      if (selectedRating === 0) {
+        alert("별점을 선택해 주세요!");
+        return;
+      }
+      alert(`소중한 별점(${selectedRating}점)과 후기가 작성되었습니다! 감사의 마음을 전합니다. 🌱`);
+      document.getElementById('review-input').value = '';
+      setRating(0);
+    }
+
+    function resetForm() {
+      document.getElementById('result-card').style.display = 'none';
+      document.getElementById('step-card').style.display = 'block';
+      currentStep = 1;
+      updateStep();
+    }
+  </script>
+</body>
+</html>
